@@ -1,0 +1,237 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/mizcausevic-dev/ai-claims-decision-card-spec/blob/main/schemas/ai-claims-decision-card.schema.json",
+  "title": "AI Claims Decision Card",
+  "description": "A signed, hash-chained record documenting that an AI system evaluated an insurance claim and reached a decision, with full evidence provenance and governance context. Detection key: claims_card_version. v0.1 draft.",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "claims_card_version",
+    "claim",
+    "decision",
+    "evidence_bundle",
+    "governance",
+    "attestation",
+    "disclaimer"
+  ],
+  "properties": {
+    "claims_card_version": {
+      "description": "Spec version and canonical detection field. Must be '0.1' for this schema.",
+      "type": "string",
+      "const": "0.1"
+    },
+    "claim": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["claim_id", "policy_id", "claimant_ref", "claim_type", "filed_at"],
+      "properties": {
+        "claim_id": {
+          "description": "Unique claim identifier (UUID recommended).",
+          "type": "string",
+          "minLength": 1
+        },
+        "policy_id": {
+          "description": "Policy identifier.",
+          "type": "string",
+          "minLength": 1
+        },
+        "claimant_ref": {
+          "description": "Opaque claimant reference. Must not contain PII.",
+          "type": "string",
+          "minLength": 1
+        },
+        "claim_type": {
+          "description": "Category of the insurance claim.",
+          "type": "string",
+          "enum": ["property_damage", "medical", "auto", "life", "liability", "other"]
+        },
+        "filed_at": {
+          "description": "When the claim was filed (ISO 8601 datetime).",
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["outcome", "reasons", "rule_refs", "coverage"],
+      "properties": {
+        "outcome": {
+          "description": "The adjudication outcome.",
+          "type": "string",
+          "enum": ["approve", "deny", "pend", "refer"]
+        },
+        "reasons": {
+          "description": "Human-readable reasons for the outcome. At least one required.",
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "rule_refs": {
+          "description": "Underwriting rule identifiers applied to reach the outcome.",
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "coverage": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": ["covered", "amount", "currency"],
+          "properties": {
+            "covered": {
+              "description": "Whether the claim is covered under the policy.",
+              "type": "boolean"
+            },
+            "amount": {
+              "description": "Approved amount. null for deny, pend, or refer outcomes.",
+              "oneOf": [{ "type": "number" }, { "type": "null" }]
+            },
+            "currency": {
+              "description": "ISO 4217 currency code, e.g. USD.",
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "evidence_bundle": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["sources", "model", "synthesis_method"],
+      "properties": {
+        "sources": {
+          "description": "Evidence items considered during evaluation. At least one required.",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": ["source_id", "source_type", "content_hash", "retrieval_confidence", "synthesis_role"],
+            "properties": {
+              "source_id": {
+                "description": "Unique identifier for this evidence item.",
+                "type": "string",
+                "minLength": 1
+              },
+              "source_type": {
+                "description": "Kind of evidence source.",
+                "type": "string",
+                "enum": ["document", "image", "database_record", "external_api", "structured_data"]
+              },
+              "content_hash": {
+                "description": "SHA-256 of evidence content at retrieval time (64-char lowercase hex).",
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "retrieval_confidence": {
+                "description": "Confidence in the retrieved evidence, 0.0 to 1.0.",
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "synthesis_role": {
+                "description": "How the evidence item contributed to the decision.",
+                "type": "string",
+                "enum": ["primary", "supporting", "excluded"]
+              }
+            }
+          }
+        },
+        "model": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": ["model_id", "model_version", "provider"],
+          "properties": {
+            "model_id": { "description": "AI model identifier.", "type": "string", "minLength": 1 },
+            "model_version": { "description": "Model version.", "type": "string", "minLength": 1 },
+            "provider": { "description": "Model provider.", "type": "string", "minLength": 1 }
+          }
+        },
+        "synthesis_method": {
+          "description": "How the model synthesized the evidence into a decision.",
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "governance": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["underwriting_rules_version", "jurisdiction", "regulatory_refs", "human_in_loop", "reviewer_ref"],
+      "properties": {
+        "underwriting_rules_version": {
+          "description": "Version of the underwriting ruleset in force.",
+          "type": "string",
+          "minLength": 1
+        },
+        "jurisdiction": {
+          "description": "ISO 3166-1 alpha-2 country, optionally with subdivision, e.g. US-CA.",
+          "type": "string",
+          "minLength": 2
+        },
+        "regulatory_refs": {
+          "description": "Applicable regulatory frameworks or codes.",
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "human_in_loop": {
+          "description": "Whether a human adjuster reviewed before finalization.",
+          "type": "boolean"
+        },
+        "reviewer_ref": {
+          "description": "Opaque reviewer identifier, or null if fully automated.",
+          "oneOf": [{ "type": "string" }, { "type": "null" }]
+        }
+      }
+    },
+    "attestation": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["card_hash", "signature", "algorithm", "signing_key_id", "signed_at", "chain_index", "prev_card_hash"],
+      "properties": {
+        "card_hash": {
+          "description": "SHA-256 of the canonical JSON with the attestation object excluded (64-char lowercase hex).",
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "signature": {
+          "description": "ed25519 signature over card_hash (128-char lowercase hex).",
+          "type": "string",
+          "pattern": "^[a-f0-9]{128}$"
+        },
+        "algorithm": {
+          "description": "Signature algorithm. Must be ed25519.",
+          "type": "string",
+          "const": "ed25519"
+        },
+        "signing_key_id": {
+          "description": "Identifier of the signing key.",
+          "type": "string",
+          "minLength": 1
+        },
+        "signed_at": {
+          "description": "Attestation timestamp (ISO 8601 datetime).",
+          "type": "string",
+          "format": "date-time"
+        },
+        "chain_index": {
+          "description": "Position in the hash chain. Starts at 0.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "prev_card_hash": {
+          "description": "card_hash of the preceding card in the chain, or null for chain_index 0.",
+          "oneOf": [
+            { "type": "string", "minLength": 64, "maxLength": 64 },
+            { "type": "null" }
+          ]
+        }
+      }
+    },
+    "disclaimer": {
+      "description": "REQUIRED. Must state that the card is a governance artifact, not legal advice.",
+      "type": "string",
+      "minLength": 20
+    }
+  }
+}
