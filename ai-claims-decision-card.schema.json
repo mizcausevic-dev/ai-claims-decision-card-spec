@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://github.com/mizcausevic-dev/ai-claims-decision-card-spec/blob/main/schemas/ai-claims-decision-card.schema.json",
+  "$id": "https://github.com/mizcausevic-dev/ai-claims-decision-card-spec/blob/main/ai-claims-decision-card.schema.json",
   "title": "AI Claims Decision Card",
   "description": "A signed, hash-chained record documenting that an AI system evaluated an insurance claim and reached a decision, with full evidence provenance and governance context. Detection key: claims_card_version. v0.1 draft.",
   "type": "object",
