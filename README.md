@@ -24,8 +24,9 @@ the AI Procurement Decision Card).
 ## Files
 
 - [SPEC.md](./SPEC.md)
-- [schemas/ai-claims-decision-card.schema.json](./schemas/ai-claims-decision-card.schema.json)
-- [fixtures/sample-claims-decision-card.json](./fixtures/sample-claims-decision-card.json)
+- [ai-claims-decision-card.schema.json](./ai-claims-decision-card.schema.json)
+- [examples/sample-claims-decision-card.json](./examples/sample-claims-decision-card.json)
+- [docs/ORIGIN.md](./docs/ORIGIN.md)
 
 ## Relationship to the Protocol Suite
 
@@ -47,7 +48,7 @@ This spec feeds the following downstream repos:
 
 ## License
 
-Apache-2.0 for schema and fixture. CC-BY-4.0 for the spec document.
+MIT, matching the other specs in the Kinetic Gain Protocol Suite.
 
 ## Disclaimer
 
